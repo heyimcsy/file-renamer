@@ -41,6 +41,15 @@ jobs:
 
       - name: Build app (.app/.dmg on macOS, .msi/.exe on Windows)
         run: npm run tauri build
+        env:
+          # 아래 Secrets 가 채워지면 macOS 빌드가 자동으로 서명+공증됩니다.
+          # (비어 있으면 지금처럼 미서명으로 빌드 — Windows 는 이 값들을 무시)
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       # 실행 화면 하단 Artifacts 에서도 받을 수 있게 업로드.
       - name: Upload installers
