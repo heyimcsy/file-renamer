@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Renamer</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <main class="app">
+      <header class="titlebar">
+        <h1>Renamer</h1>
+        <span class="subtitle">파일명 일괄 변경</span>
+      </header>
+
+      <!-- 입력 -->
+      <section class="card">
+        <div id="dropzone" class="dropzone">
+          <div class="dz-inner">
+            <div class="dz-icon">⬇︎</div>
+            <div class="dz-text">파일이나 폴더를 여기에 드롭하세요</div>
+            <div class="dz-buttons">
+              <button id="btn-files" class="btn ghost" type="button">파일 선택…</button>
+              <button id="btn-folder" class="btn ghost" type="button">폴더 선택…</button>
+            </div>
+          </div>
+        </div>
+        <div class="row-between">
+          <label class="check">
+            <input type="checkbox" id="include-sub" />
+            <span>하위 폴더 포함</span>
+          </label>
+          <button id="btn-clear" class="btn link" type="button" hidden>모두 지우기</button>
+        </div>
+        <div id="warnings" class="warnings" hidden></div>
+      </section>
+
+      <!-- 모드 -->
+      <section class="card">
+        <div class="mode-row">
+          <span class="label">모드</span>
+          <label class="radio">
+            <input type="radio" name="mode" value="date" checked />
+            <span>날짜 포맷 변환</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="mode" value="sequence" />
+            <span>순번 붙이기</span>
+          </label>
+        </div>
+
+        <!-- 모드 1 설정 -->
+        <div id="panel-date" class="panel">
+          <p class="hint">
+            맨 앞의 <code>YYMMDD_</code> 를 <code>YYYYMMDD_</code> 로 바꿉니다.
+            (예: <code>260520_삼청동</code> → <code>20260520_삼청동</code>)
+          </p>
+          <div class="field">
+            <label for="century">세기 접두어</label>
+            <select id="century">
+              <option value="20" selected>20 (2000년대)</option>
+              <option value="19">19 (1900년대)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 모드 2 설정 -->
+        <div id="panel-sequence" class="panel" hidden>
+          <div class="grid">
+            <div class="field">
+              <label for="sort-field">정렬 기준</label>
+              <select id="sort-field">
+                <option value="created" selected>생성일</option>
+                <option value="modified">수정일</option>
+                <option value="name">파일명</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sort-dir">정렬 방향</label>
+              <select id="sort-dir">
+                <option value="desc" selected>최신순 (최신=01)</option>
+                <option value="asc">오래된순 (오래된=01)</option>
+              </select>
+            </div>
+            <div class="field span2">
+              <label for="fixed">고정 문자</label>
+              <input type="text" id="fixed" placeholder="예: _강남촬영" />
+            </div>
+            <div class="field">
+              <label>순번 위치</label>
+              <div class="seg">
+                <label class="radio">
+                  <input type="radio" name="position" value="prefix" checked /><span>맨 앞</span>
+                </label>
+                <label class="radio">
+                  <input type="radio" name="position" value="suffix" /><span>맨 뒤</span>
+                </label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="start-number">시작 번호</label>
+              <input type="number" id="start-number" value="1" min="0" />
+            </div>
+            <div class="field">
+              <label for="digits-mode">자릿수</label>
+              <div class="inline">
+                <select id="digits-mode">
+                  <option value="auto" selected>자동</option>
+                  <option value="manual">수동</option>
+                </select>
+                <input type="number" id="digits-manual" value="2" min="1" max="6" hidden />
+              </div>
+            </div>
+            <div class="field">
+              <label for="separator">구분자</label>
+              <input type="text" id="separator" value="_" maxlength="4" />
+            </div>
+            <div class="field span2">
+              <label class="check">
+                <input type="checkbox" id="replace-original" />
+                <span>원본 파일명 대신 순번+고정 문자로 완전히 대체</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 미리보기 -->
+      <section class="card grow">
+        <div class="preview-head">
+          <span id="count-badge" class="count-badge">미리보기</span>
+          <label class="check small">
+            <input type="checkbox" id="only-changes" />
+            <span>변경되는 파일만 표시</span>
+          </label>
+        </div>
+        <div id="preview-list" class="preview-list">
+          <div class="empty">파일을 추가하면 <b>변경 전 → 변경 후</b> 목록이 여기에 표시됩니다.</div>
+        </div>
+      </section>
+
+      <!-- 적용 -->
+      <footer class="footer">
+        <div class="footer-left">
+          <label class="check small">
+            <span>이름 충돌 시</span>
+            <select id="conflict-mode">
+              <option value="skip" selected>건너뛰기</option>
+              <option value="suffix">(1) 접미어 붙이기</option>
+            </select>
+          </label>
+          <div id="summary" class="summary"></div>
+        </div>
+        <div class="footer-right">
+          <button id="btn-undo" class="btn" type="button" disabled>되돌리기</button>
+          <button id="btn-apply" class="btn primary" type="button" disabled>적용하기</button>
+        </div>
+      </footer>
+    </main>
+
+    <div id="toast" class="toast" hidden></div>
+  </body>
+</html>
